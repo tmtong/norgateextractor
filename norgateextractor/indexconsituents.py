@@ -2,6 +2,8 @@ import logging
 import norgatedata
 import multiprocessing as mp
 import pandas as pd
+from multiprocessing import Pool, cpu_count
+from functools import partial
 
 def get_all_market_symbols():
     print("Retrieving all symbols from US Equities and US Equities Delisted...")
@@ -14,52 +16,58 @@ def get_all_market_symbols():
 
 
 
-def build_sp500_constituents_map():
-    # Get all symbols
+
+def process_symbol(symbol, index_symbol="S&P 500"):
+    """Process a single symbol to extract its S&P 500 membership history"""
+
+    try:
+        df = norgatedata.index_constituent_timeseries(
+            symbol,
+            index_symbol,
+            timeseriesformat="pandas-dataframe"
+        )
+    except Exception as e:
+        # print(f"Error fetching data for {symbol}: {e}")
+        return []
+
+    if df.empty:
+        return []
+
+    df_filtered = df[df['Index Constituent'] == 1]
+    dates = df_filtered.index.get_level_values(0).strftime('%Y-%m-%d').tolist()
+    return [(date, symbol) for date in dates]
+
+
+def build_sp500_constituents_map_mp():
     active_symbols, delisted_symbols = get_all_market_symbols()
     all_symbols = list(set(active_symbols + delisted_symbols))
 
-    # Set up parameters
-    index_symbol = "S&P 500"  # S&P 500
-    padding_setting = norgatedata.PaddingSetting.COMPACT  # No forward filling
-    constituents_map = {}
+    print(f"Processing {len(all_symbols)} symbols using multiprocessing...")
 
-    print(f"Processing {len(all_symbols)} symbols...")
+    # Use all available CPU cores minus one to avoid overloading the system
+    num_processes = min(cpu_count() - 1, len(all_symbols))
+    print(f"Using {num_processes} processes.")
 
-    for symbol in all_symbols:
-        try:
-            # Get index constituent time series for this symbol
-            df = norgatedata.index_constituent_timeseries(
-                symbol,
-                index_symbol,
-                padding_setting=padding_setting,
-                timeseriesformat="pandas-dataframe"
-            )
-        except Exception as e:
-            print(f"Error fetching data for {symbol}: {e}")
-            continue
+    with Pool(num_processes) as pool:
+        results = pool.map(partial(process_symbol), all_symbols)
 
-        if df.empty:
-            continue
-
-        # Filter only dates where the symbol was in the index
-        df_filtered = df[df['Index Constituent'] == 1]
-
-        for date in df_filtered.index.get_level_values(0):
-            date_str = date.strftime('%Y-%m-%d')
-            if date_str not in constituents_map:
-                constituents_map[date_str] = []
-            constituents_map[date_str].append(symbol)
+    # Flatten the list of results
+    date_to_symbols = {}
+    for result in results:
+        for date, symbol in result:
+            if date not in date_to_symbols:
+                date_to_symbols[date] = []
+            date_to_symbols[date].append(symbol)
 
     # Convert to DataFrame
-    result = pd.DataFrame(list(constituents_map.items()), columns=['Date', 'Constituents'])
+    df = pd.DataFrame(list(date_to_symbols.items()), columns=['Date', 'Constituents'])
 
     # Save to CSV
-    result.to_csv('sp500_constituents_by_date.csv', index=False)
+    df.to_csv('sp500_constituents_by_date.csv', index=False)
     print("CSV file saved as 'sp500_constituents_by_date.csv'.")
 
-    return result
+    return df
 
 
 if __name__ == "__main__":
-    build_sp500_constituents_map()
+    build_sp500_constituents_map_mp()
