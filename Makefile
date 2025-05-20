@@ -4,6 +4,7 @@ requirements:
 	chmod 700 sec
 	pip install --upgrade pip
 	pip install -r requirements.txt
+	mkdir -p data/index data/stock
 	
 
 gitrcommit:

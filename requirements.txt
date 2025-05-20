@@ -1,0 +1,3 @@
+norgatedata
+pandas 
+pandas_market_calendars
