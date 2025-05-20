@@ -19,7 +19,7 @@ def get_all_market_symbols():
 
 def process_symbol(symbol, index_symbol="S&P 500"):
     """Process a single symbol to extract its S&P 500 membership history"""
-
+    print('Processing ' + symbol)
     try:
         df = norgatedata.index_constituent_timeseries(
             symbol,
@@ -45,7 +45,7 @@ def build_sp500_constituents_map_mp():
     print(f"Processing {len(all_symbols)} symbols using multiprocessing...")
 
     # Use all available CPU cores minus one to avoid overloading the system
-    num_processes = min(cpu_count() - 1, len(all_symbols))
+    num_processes = 4
     print(f"Using {num_processes} processes.")
 
     with Pool(num_processes) as pool:
