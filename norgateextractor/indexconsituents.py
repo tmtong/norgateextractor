@@ -26,6 +26,7 @@ def process_symbol(inputs):
         df = norgatedata.index_constituent_timeseries(
             symbol,
             indexname,
+            padding_setting= norgatedata.PaddingType.ALLMARKETDAYS,
             timeseriesformat="pandas-dataframe"
         )
     except Exception as e:
