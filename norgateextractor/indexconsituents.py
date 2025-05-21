@@ -3,19 +3,19 @@ import norgatedata
 import multiprocessing as mp
 
 def get_all_market_symbols():
-    logging.info("Retrieving all symbols from US Equities and US Equities Delisted...")
+    print("Retrieving all symbols from US Equities and US Equities Delisted...")
     
     us_equities = norgatedata.database_symbols('US Equities')
     us_delisted = norgatedata.database_symbols('US Equities Delisted')
     
-    logging.info(f"Retrieved {len(us_equities)} active symbols and {len(us_delisted)} delisted symbols.")
+    print(f"Retrieved {len(us_equities)} active symbols and {len(us_delisted)} delisted symbols.")
     return us_equities, us_delisted
 
 
 
 
 def download_stock_data(symbol):
-    logging.info(f"Downloading data for {symbol} ...")
+    print(f"Downloading data for {symbol} ...")
     priceadjust = norgatedata.StockPriceAdjustmentType.TOTALRETURN
     padding_setting = norgatedata.PaddingType.NONE
     timeseriesformat = 'pandas-dataframe'
@@ -43,4 +43,4 @@ def multi_download(symbols):
 if __name__ == "__main__":
     active_symbols, delisted_symbols = get_all_market_symbols()
     all_symbols = active_symbols + delisted_symbols
-    single_download(all_symbols)
+    multi_download(all_symbols)
