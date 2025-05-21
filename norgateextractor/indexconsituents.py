@@ -21,7 +21,6 @@ def get_all_market_symbols():
 def process_symbol(inputs):
     symbol = inputs[0]
     indexname = inputs[1]
-    print('Processing ' + symbol)
     try:
         df = norgatedata.index_constituent_timeseries(
             symbol,
@@ -55,7 +54,7 @@ def build_constituents(all_symbols, index_name, index_symbol):
     inputs = [[symbol, index_name] for symbol in all_symbols]
 
 
-    print(f"Processing {len(all_symbols)} symbols using multiprocessing...")
+    print(f"Processing " + index_name + " using multiprocessing...")
 
     # Use all available CPU cores minus one to avoid overloading the system
     num_processes = 8
