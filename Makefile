@@ -1,4 +1,5 @@
-
+serve:
+	gunicorn -w 4 -k uvicorn.workers.UvicornThreadWorker norgateextractor.serve:app
 
 requirements:
 	chmod 700 sec

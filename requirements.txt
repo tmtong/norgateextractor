@@ -3,4 +3,4 @@ pandas
 pandas_market_calendars
 fastapi 
 uvicorn 
-
+gunicorn 
