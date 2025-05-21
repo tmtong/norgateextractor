@@ -40,18 +40,18 @@ def process_symbol(inputs):
     return [(date, symbol) for date in dates]
 
 
-def build_constituents(all_symbols, indexname):
+def build_constituents(all_symbols, index_name, index_symbol):
 
     dirpath = 'data/index/'
-    indexfilename = indexname
+    indexfilename = index_symbol
     indexfilename = indexfilename.replace(' ', '')
     indexfilename = re.sub(r'[^a-zA-Z0-9]', '', indexfilename)
-    indexfilename = indexfilename + '.csv'
+    indexfilename = indexfilename + '.components'
     indexfilename = dirpath  + indexfilename
     if os.path.isfile(indexfilename):
         return
 
-    inputs = [[symbol, indexname] for symbol in all_symbols]
+    inputs = [[symbol, index_name] for symbol in all_symbols]
 
 
     print(f"Processing {len(all_symbols)} symbols using multiprocessing...")
@@ -81,17 +81,23 @@ def build_constituents(all_symbols, indexname):
 
 
 
-def all_index():
-    return ['Dow Jones Industrial Average', 'Nasdaq-100', 'Nasdaq Q-50', 'Nasdaq Next Generation 100', 'Nasdaq-100 Technology Sector', 'Nasdaq Biotechnology', 'Russell Top 200', 'Russell 1000', 'Russell 2000', 'Russell 3000', 'Russell Mid Cap', 'Russell Micro Cap', 'Russell Small Cap Completeness', 'S&P 100', 'S&P 500', 'S&P MidCap 400', 'S&P SmallCap 600', 'S&P Composite 1500', 'S&P 1000', 'S&P 900', 'S&P 500 Dividend Aristocrats', 'S&P 500 ESG', 'Nasdaq-100 + Q-50 Superset', 'Nasdaq-100 + Next Generation 100 Superset','Russell 1000 2000 + Micro Cap Superset', 'Russell 2000 + Micro Cap Superset', 'Russell Micro Cap excl Russell 2000,' 'Russell 2000 bottom 1000', 'S&P 500 excl S&P 100']
+def get_index_names():
+    return ['Dow Jones Industrial Average', 'Nasdaq-100', 'Nasdaq Q-50', 'Nasdaq Next Generation 100', 'Nasdaq-100 Technology Sector', 'Nasdaq Biotechnology', 'Russell Top 200', 'Russell 1000', 'Russell 2000', 'Russell 3000', 'Russell Mid Cap', 'Russell Micro Cap', 'Russell Small Cap Completeness', 'S&P 100', 'S&P 500', 'S&P MidCap 400', 'S&P SmallCap 600', 'S&P Composite 1500', 'S&P 1000', 'S&P 900', 'S&P 500 Dividend Aristocrats', 'S&P 500 ESG']
 
+
+def get_index_symbols():
+    return ['$DJI', '$NDX', '$NXTQ', '$NGX', '$NDXT', '$NBI', '$RT200', '$RUI', '$RUT', '$RUA', '$RMC', '$RUMIC', '$RSCC', '$OEX', '$SPX', '$MID', '$SML', '$SP1500', '$SP1000', '$SP900', '$SPDAUDP', '$SPESG']
 
 
 
 if __name__ == "__main__":
     active_symbols, delisted_symbols = get_all_market_symbols()
     all_symbols = list(set(active_symbols + delisted_symbols))
-    all_indexs = all_index() 
+    index_names = get_index_names() 
+    index_symbols = get_index_symbols()
     # all_indexs = ['S&P 500'] # WARNING
     # all_symbols = all_symbols[0:30] # WARNING
-    for indexname in all_indexs:
-        build_constituents(all_symbols, indexname)
+    for i in range(0, len(index_names)):
+        index_name = index_names[i]
+        index_symbol = index_symbols[i]
+        build_constituents(all_symbols, index_name, index_symbol)
