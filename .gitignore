@@ -6,7 +6,8 @@ __pycache__/
 
 sec
 data
-
+norgatedata
+*.zip
 
 # C extensions
 *.so
