@@ -45,9 +45,9 @@ def multi_download(symbols):
     pool.map(download_stock_data, symbols)
 
 if __name__ == "__main__":
-    # active_symbols, delisted_symbols = get_all_market_symbols()
-    # all_symbols = active_symbols + delisted_symbols
-    # multi_download(all_symbols)
+    active_symbols, delisted_symbols = get_all_market_symbols()
+    all_symbols = active_symbols + delisted_symbols
+    multi_download(all_symbols)
 
-    all_indexs = get_all_indexs()
-    multi_download(all_indexs)
+    # all_indexs = get_all_indexs()
+    # multi_download(all_indexs)
