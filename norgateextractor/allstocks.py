@@ -23,7 +23,7 @@ def download_stock_data(symbol):
     filename = dirpath + re.sub(r'[^a-zA-Z0-9]', '', symbol)
 
     priceadjust = norgatedata.StockPriceAdjustmentType.TOTALRETURN
-    padding_setting = norgatedata.PaddingType.ALLMARKETDAYS
+    padding_setting = norgatedata.PaddingType.NONE # so we know it is delisted
     timeseriesformat = 'pandas-dataframe'
     pricedata = norgatedata.price_timeseries(
         symbol,
