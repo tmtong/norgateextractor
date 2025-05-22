@@ -5,22 +5,29 @@ import pandas as pd
 import os
 import re
 from datetime import datetime
-
+from cachetools import LRUCache
+from threading import Lock
+import uvicorn
 app = FastAPI()
 
 # === Configuration ===
 MOUNTPOINT = "./norgatedata"
-INDEX_DIR = os.path.join(MOUNTPOINT, "data", "index")
-STOCK_DIR = os.path.join(MOUNTPOINT, "data", "stock")
+INDEX_DIR = os.path.join(MOUNTPOINT, "index")
+STOCK_DIR = os.path.join(MOUNTPOINT, "stock")
 
 DATE_FORMAT = "%Y-%m-%d"
 MAX_SYMBOL_LENGTH = 10
 
-# === Global Lazy Cache ===
+# === Global Lazy Cache with LRU Eviction ===
+INDEX_CACHE_SIZE = 50   # Max number of index datasets cached
+STOCK_CACHE_SIZE = 200  # Max number of stock datasets cached
+
 GLOBAL_CACHE = {
-    "index": {},  # { index_symbol: { date_str: [symbols] } }
-    "stock": {}   # { symbol: { date_str: { col: val } } }
+    "index": LRUCache(maxsize=INDEX_CACHE_SIZE),
+    "stock": LRUCache(maxsize=STOCK_CACHE_SIZE),
 }
+
+CACHE_LOCK = Lock()  # Ensure thread-safe access to cache
 
 # === Pydantic Models ===
 class IndexRequest(BaseModel):
@@ -48,8 +55,8 @@ def sanitize_date(date_str: str) -> str:
 
 def sanitize_symbol(symbol: str, max_length: int = MAX_SYMBOL_LENGTH) -> str:
     symbol = symbol.strip().upper()
-    if not re.fullmatch(r"[A-Z0-9]+", symbol):
-        raise ValueError("Symbol must contain only letters and numbers")
+    if not re.fullmatch(r"[A-Z0-9._\-/$]+", symbol):
+        raise ValueError("Symbol contains invalid characters")
     if len(symbol) > max_length:
         raise ValueError(f"Symbol exceeds maximum length of {max_length}")
     return symbol
@@ -65,8 +72,8 @@ def safe_file_path(base_dir: str, filename: str) -> str:
 
 # === Lazy Load Helpers ===
 
-def load_index_to_cache(index_symbol: str):
-    filename = f"{index_symbol.lower()}.components"
+def load_index_to_cache(index_symbol: str) -> Dict[str, List[str]]:
+    filename = f"{index_symbol}.components"
     file_path = os.path.join(INDEX_DIR, filename)
 
     if not os.path.exists(file_path):
@@ -85,14 +92,14 @@ def load_index_to_cache(index_symbol: str):
                 print(f"Error parsing row in index {index_symbol}: {str(e)}")
                 continue
 
-        GLOBAL_CACHE["index"][index_symbol] = data_map
+        return data_map
 
     except Exception as e:
         raise RuntimeError(f"Failed to load index {index_symbol}: {str(e)}")
 
 
-def load_stock_to_cache(symbol: str):
-    filename = f"{symbol.lower()}.symbol"
+def load_stock_to_cache(symbol: str) -> Dict[str, Dict]:
+    filename = f"{symbol}.symbol"
     file_path = os.path.join(STOCK_DIR, filename)
 
     if not os.path.exists(file_path):
@@ -110,7 +117,7 @@ def load_stock_to_cache(symbol: str):
                 print(f"Error parsing row in stock {symbol}: {str(e)}")
                 continue
 
-        GLOBAL_CACHE["stock"][symbol] = data_map
+        return data_map
 
     except Exception as e:
         raise RuntimeError(f"Failed to load stock {symbol}: {str(e)}")
@@ -126,18 +133,19 @@ def get_index_constituents(request: IndexRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Lazy load index if not in cache
-    if index_symbol not in GLOBAL_CACHE["index"]:
-        try:
-            load_index_to_cache(index_symbol)
-        except FileNotFoundError:
-            raise HTTPException(status_code=404, detail=f"Index file not found for {index_symbol}")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    with CACHE_LOCK:
+        if index_symbol in GLOBAL_CACHE["index"]:
+            index_data = GLOBAL_CACHE["index"][index_symbol]
+        else:
+            try:
+                index_data = load_index_to_cache(index_symbol)
+                GLOBAL_CACHE["index"][index_symbol] = index_data
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail=f"Index file not found for {index_symbol}")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
 
-    index_data = GLOBAL_CACHE["index"][index_symbol]
     constituents = index_data.get(input_date)
-
     if not constituents:
         raise HTTPException(status_code=404, detail=f"No data for date: {input_date} in index {index_symbol}")
 
@@ -156,19 +164,30 @@ def get_stock_data(request: StockDataRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Lazy load stock if not in cache
-    if symbol not in GLOBAL_CACHE["stock"]:
-        try:
-            load_stock_to_cache(symbol)
-        except FileNotFoundError:
-            raise HTTPException(status_code=404, detail=f"Stock file not found for {symbol}")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    with CACHE_LOCK:
+        if symbol in GLOBAL_CACHE["stock"]:
+            stock_data = GLOBAL_CACHE["stock"][symbol]
+        else:
+            try:
+                stock_data = load_stock_to_cache(symbol)
+                GLOBAL_CACHE["stock"][symbol] = stock_data
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail=f"Stock file not found for {symbol}")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
 
-    stock_data = GLOBAL_CACHE["stock"][symbol]
     row = stock_data.get(input_date)
-
     if not row:
         raise HTTPException(status_code=404, detail=f"No data for date: {input_date} for stock {symbol}")
 
     return row
+
+# === Run the server via main() for debugging in VSCode ===
+if __name__ == "__main__":
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        loop="asyncio",
+        http="httptools",
+    )

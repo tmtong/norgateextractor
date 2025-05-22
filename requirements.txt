@@ -4,3 +4,5 @@ pandas_market_calendars
 fastapi 
 uvicorn 
 gunicorn 
+cachetools
+requests
