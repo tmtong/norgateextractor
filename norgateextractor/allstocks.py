@@ -20,7 +20,7 @@ def get_all_indexs():
 def download_stock_data(symbol):
     print(f"Downloading data for {symbol} ...")
     dirpath = './data/stock/'
-    filename = dirpath + symbol
+    filename = dirpath + symbol.replace('$', '')
 
     priceadjust = norgatedata.StockPriceAdjustmentType.TOTALRETURN
     padding_setting = norgatedata.PaddingType.NONE # so we know it is delisted
@@ -49,5 +49,5 @@ if __name__ == "__main__":
     all_symbols = active_symbols + delisted_symbols
     multi_download(all_symbols)
 
-    # all_indexs = get_all_indexs()
-    # multi_download(all_indexs)
+    all_indexs = get_all_indexs()
+    multi_download(all_indexs)
