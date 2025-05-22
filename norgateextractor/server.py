@@ -155,7 +155,6 @@ def get_index_constituents(request: IndexRequest):
         constituents=constituents
     )
 
-
 @app.post("/stockdata")
 def get_stock_data(request: StockDataRequest):
     try:
@@ -176,11 +175,18 @@ def get_stock_data(request: StockDataRequest):
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
-    row = stock_data.get(input_date)
-    if not row:
-        raise HTTPException(status_code=404, detail=f"No data for date: {input_date} for stock {symbol}")
+
+    # Build NaN row based on available columns
+    if stock_data:
+        example_row = next(iter(stock_data.values()))
+        nan_row = {col: float('nan') for col in example_row.keys()}
+    else:
+        nan_row = {}
+
+    row = stock_data.get(input_date, nan_row)
 
     return row
+
 
 # === Run the server via main() for debugging in VSCode ===
 if __name__ == "__main__":
