@@ -31,5 +31,7 @@ gitrupdate:
 	git config --global credential.helper store
 	git pull --no-rebase
 
+zipup:
+	zip -9r `date '+%Y%m%d'`.zip norgatedata/index norgatedata/stock
 copyz:
 	cp -vr norgatedata/* /cygdrive/z/

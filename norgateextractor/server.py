@@ -25,7 +25,7 @@ MAX_SYMBOL_LENGTH = 10
 
 # === Global Lazy Cache with LRU Eviction ===
 INDEX_CACHE_SIZE = 50   # Max number of index datasets cached
-STOCK_CACHE_SIZE = 200  # Max number of stock datasets cached
+STOCK_CACHE_SIZE = 500  # Max number of stock datasets cached
 
 GLOBAL_CACHE = {
     "index": LRUCache(maxsize=INDEX_CACHE_SIZE),
@@ -111,14 +111,14 @@ def load_index_to_cache(index_symbol: str) -> Dict[str, List[str]]:
 
 
 def load_stock_to_cache(symbol: str) -> Dict[str, Dict]:
-    filename = f"{symbol}.csv"
+    filename = f"{symbol}.feather"
     file_path = os.path.join(METRICS_DIR, filename)
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Stock file not found: {file_path}")
 
     try:
-        df = pd.read_csv(file_path)
+        df = pd.read_feather(file_path)
         data_map = {}
 
         for _, row in df.iterrows():
