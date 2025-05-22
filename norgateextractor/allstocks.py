@@ -33,7 +33,7 @@ def download_stock_data(symbol):
         padding_setting=padding_setting,
         timeseriesformat=timeseriesformat
     )
-    pricedata.to_csv(filename  + '.symbol')
+    pricedata.to_csv(filename  + '.csv')
 
 
 

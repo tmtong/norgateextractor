@@ -14,6 +14,7 @@ app = FastAPI()
 MOUNTPOINT = "./norgatedata"
 INDEX_DIR = os.path.join(MOUNTPOINT, "index")
 STOCK_DIR = os.path.join(MOUNTPOINT, "stock")
+METRICS_DIR =  os.path.join(MOUNTPOINT, "stockmetrics")
 
 DATE_FORMAT = "%Y-%m-%d"
 MAX_SYMBOL_LENGTH = 10
@@ -53,12 +54,16 @@ def sanitize_date(date_str: str) -> str:
     except ValueError:
         raise ValueError(f"Invalid date format. Expected format: {DATE_FORMAT}")
 
-def sanitize_symbol(symbol: str, max_length: int = MAX_SYMBOL_LENGTH) -> str:
+def sanitize_symbol(symbol: str) -> str:
+    """
+    Sanitizes and validates a stock/index symbol.
+
+    Allows: uppercase letters, numbers, dot (.), dash (-), underscore (_)
+    Returns: sanitized symbol in uppercase
+    """
     symbol = symbol.strip().upper()
-    if not re.fullmatch(r"[A-Z0-9._\-/$]+", symbol):
+    if not re.fullmatch(r"[A-Za-z0-9._\-_]+", symbol):
         raise ValueError("Symbol contains invalid characters")
-    if len(symbol) > max_length:
-        raise ValueError(f"Symbol exceeds maximum length of {max_length}")
     return symbol
 
 def safe_file_path(base_dir: str, filename: str) -> str:
@@ -99,8 +104,8 @@ def load_index_to_cache(index_symbol: str) -> Dict[str, List[str]]:
 
 
 def load_stock_to_cache(symbol: str) -> Dict[str, Dict]:
-    filename = f"{symbol}.symbol"
-    file_path = os.path.join(STOCK_DIR, filename)
+    filename = f"{symbol}.csv"
+    file_path = os.path.join(METRICS_DIR, filename)
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Stock file not found: {file_path}")

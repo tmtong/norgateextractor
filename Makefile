@@ -32,4 +32,4 @@ gitrupdate:
 	git pull --no-rebase
 
 copyz:
-	cp -r norgatedata /cygdrive/z/
+	cp -vr norgatedata/* /cygdrive/z/
