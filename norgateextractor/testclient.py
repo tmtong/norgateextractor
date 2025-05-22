@@ -42,8 +42,8 @@ def get_stock_data(symbol: str, date: str) -> Optional[dict]:
 
 def test_single_requests():
     print("\n=== Testing Single Requests ===")
-    print(get_index_constituents("SPX", "2023-12-29"))
-    print(get_stock_data("AAPL", "2023-12-29"))
+    # print(get_index_constituents("SPX", "2023-12-29"))
+    print(get_stock_data("ABIG", "1990-04-25"))
 
 
 def test_concurrent_requests():
@@ -65,5 +65,5 @@ def test_concurrent_requests():
 
 
 if __name__ == "__main__":
-    # test_single_requests()
-    test_concurrent_requests()
+    test_single_requests()
+    # test_concurrent_requests()
