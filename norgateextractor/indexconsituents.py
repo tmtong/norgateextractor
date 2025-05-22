@@ -6,6 +6,7 @@ from multiprocessing import Pool, cpu_count
 from functools import partial
 import os
 import re
+mountpoint = './norgatedata/'
 def get_all_market_symbols():
     print("Retrieving all symbols from US Equities and US Equities Delisted...")
     
@@ -42,7 +43,7 @@ def process_symbol(inputs):
 
 def build_constituents(all_symbols, index_name, index_symbol):
 
-    dirpath = 'data/index/'
+    dirpath = mountpoint + 'index/'
     indexfilename = index_symbol
     indexfilename = indexfilename.replace(' ', '')
     indexfilename = re.sub(r'[^a-zA-Z0-9]', '', indexfilename)

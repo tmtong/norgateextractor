@@ -3,6 +3,8 @@ import norgatedata
 import multiprocessing as mp
 import re
 import os
+
+mountpoint = './norgatedata/'
 def get_all_market_symbols():
     print("Retrieving all symbols from US Equities and US Equities Delisted...")
     
@@ -19,7 +21,7 @@ def get_all_indexs():
 
 def download_stock_data(symbol):
     print(f"Downloading data for {symbol} ...")
-    dirpath = './data/stock/'
+    dirpath = mountpoint + '/stock/'
     filename = dirpath + symbol.replace('$', '')
 
     priceadjust = norgatedata.StockPriceAdjustmentType.TOTALRETURN

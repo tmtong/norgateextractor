@@ -5,7 +5,7 @@ requirements:
 	chmod 700 sec
 	pip install --upgrade pip
 	pip install -r requirements.txt
-	mkdir -p data/index data/stock
+	mkdir -p norgatedata/index norgatedata/stock
 	
 
 gitrcommit:
@@ -31,4 +31,5 @@ gitrupdate:
 	git config --global credential.helper store
 	git pull --no-rebase
 
-
+copyz:
+	cp -r norgatedata /cygdrive/z/
