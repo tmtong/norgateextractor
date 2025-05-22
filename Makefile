@@ -1,4 +1,5 @@
-
+serve:
+	uvicorn norgateextractor.server:app --host 0.0.0.0 --port 8000 --loop asyncio --http httptools --reload
 
 requirements:
 	chmod 700 sec
