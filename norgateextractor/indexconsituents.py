@@ -46,7 +46,7 @@ def build_constituents(all_symbols, index_name, index_symbol):
     dirpath = mountpoint + 'index/'
     indexfilename = index_symbol
     indexfilename = indexfilename.replace(' ', '')
-    indexfilename = re.sub(r'[^a-zA-Z0-9]', '', indexfilename)
+    indexfilename = indexfilename.replace('$', 'INDEX-')
     indexfilename = indexfilename + '.components'
     indexfilename = dirpath  + indexfilename
     if os.path.isfile(indexfilename):
