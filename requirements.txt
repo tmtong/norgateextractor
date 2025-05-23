@@ -6,3 +6,9 @@ uvicorn
 gunicorn 
 cachetools
 requests
+pyarrow
+httptools
+feather-format 
+zstandard 
+tqdm 
+requests
