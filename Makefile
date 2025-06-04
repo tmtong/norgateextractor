@@ -6,6 +6,7 @@ requirements:
 	pip install --upgrade pip
 	pip install -r requirements.txt
 	mkdir -p norgatedata/index norgatedata/stock
+	# create .venv
 	
 
 gitrcommit:
