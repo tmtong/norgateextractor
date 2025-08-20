@@ -341,9 +341,10 @@ def get_closest(request: ClosestRequest):
 
     return {"symbol": symbol, "requested_date": input_date, "found_date": None, "value": None}
 
-
 @app.get("/getall")
-def get_all_data(symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
+def get_all_data(symbol: str,
+                 start_date: Optional[str] = None,
+                 end_date: Optional[str] = None):
     try:
         symbol = sanitize_symbol(symbol)
     except ValueError as e:
@@ -357,27 +358,32 @@ def get_all_data(symbol: str, start_date: Optional[str] = None, end_date: Option
                 stock_data = load_stock_to_cache(symbol)
                 GLOBAL_CACHE["stock"][symbol] = stock_data
             except FileNotFoundError:
-                raise HTTPException(status_code=404, detail=f"Stock file not found for {symbol}")
+                raise HTTPException(status_code=404,
+                                    detail=f"Stock file not found for {symbol}")
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
 
-    def _safe_value(v: Any) -> Any:
-        if isinstance(v, float) and math.isnan(v):
+    def _safe_value(v):
+        # convert NaN/Inf/-Inf -> None
+        if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
             return None
         return v
 
     result = []
     for date_str, row in stock_data.items():
-        date_obj = datetime.strptime(date_str, DATE_FORMAT)
-        if start_date and date_obj < datetime.strptime(start_date, DATE_FORMAT):
+        dt = datetime.strptime(date_str, DATE_FORMAT)
+        if start_date and dt < datetime.strptime(start_date, DATE_FORMAT):
             continue
-        if end_date and date_obj > datetime.strptime(end_date, DATE_FORMAT):
+        if end_date and dt > datetime.strptime(end_date, DATE_FORMAT):
             continue
-        cleaned_row = {k: _safe_value(v) for k, v in row.items()}
-        cleaned_row["date"] = date_str
-        result.append(cleaned_row)
+
+        # clean every scalar
+        cleaned = {k: _safe_value(v) for k, v in row.items()}
+        cleaned["date"] = date_str
+        result.append(cleaned)
 
     return {"symbol": symbol, "data": result}
+
 
 
 # === Run the server via main() for debugging in VSCode ===
