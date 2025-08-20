@@ -1,0 +1,17 @@
+
+[Unit]
+Description=norgateextractor Service
+After=network.target
+
+[Service]
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/bash -c 'cd %h/Documents/norgateextractor/ && source .venv/bin/activate && ./bin/norgateextractorinternet.sh'
+# ExecStart=/bin/bash -c 'echo "Hello, World!" > %h/test.log'
+Restart=on-failure
+RestartSec=90
+RestartSec=5
+StandardOutput=append:%h/Documents/norgateextractor/logs/dailyindex.log
+StandardError=append:%h/Documents/norgateextractor/logs/dailyindex.log
+
+[Install]
+WantedBy=default.target
