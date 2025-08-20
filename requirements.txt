@@ -12,3 +12,4 @@ feather-format
 zstandard 
 tqdm 
 requests
+openpyxl
