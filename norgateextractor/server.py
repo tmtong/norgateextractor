@@ -29,7 +29,8 @@ CACHE_DIR = os.path.join(MOUNTPOINT, "cache")
 DATE_FORMAT = "%Y-%m-%d"
 startdate_str = '1998-01-01'
 enddate_str = '2025-01-01'
-indexsymbol = "INDEX-SPX"
+# indexsymbol = "INDEX-SPX"
+indexsymbol = "INDEX-SP900"
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -148,11 +149,11 @@ def savedata(indexsymbol: str, start_date: str, end_date: str):
         except Exception as e:
             print(f"Error parsing constituents: {e}")
 
-    print(f"Found {len(all_symbols)} unique symbols. Loading data...")
+    print(f"Found {len(all_symbols)} unique symbols. Saving data...")
 
     # Load all stock data
     stock_cache = {}
-    for symbol in tqdm(list(all_symbols), desc="Loading Stocks"):
+    for symbol in tqdm(list(all_symbols), desc="Loading Stocks to memory"):
         filename = f"{symbol}.feather"
         file_path = os.path.join(METRICS_DIR, filename)
         if not os.path.exists(file_path):
