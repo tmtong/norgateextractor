@@ -27,7 +27,7 @@ METRICS_DIR = os.path.join(MOUNTPOINT, "stockmetrics")
 CACHE_DIR = os.path.join(MOUNTPOINT, "cache")
 
 DATE_FORMAT = "%Y-%m-%d"
-startdate_str = '2000-01-01'
+startdate_str = '1998-01-01'
 enddate_str = '2025-01-01'
 indexsymbol = "INDEX-SPX"
 
