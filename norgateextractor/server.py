@@ -29,8 +29,8 @@ CACHE_DIR = os.path.join(MOUNTPOINT, "cache")
 DATE_FORMAT = "%Y-%m-%d"
 startdate_str = '1998-01-01'
 enddate_str = '2025-01-01'
-# indexsymbol = "INDEX-SPX"
-indexsymbol = "INDEX-SP900"
+indexsymbol = "INDEX-SPX"
+# indexsymbol = "INDEX-SP900"
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 
