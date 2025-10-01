@@ -35,7 +35,7 @@ CACHE_DIR    = os.path.join(MOUNTPOINT, "cache")
 DATE_FORMAT  = "%Y-%m-%d"
 START_DATE   = "1998-01-01"
 END_DATE     = "2025-01-01"
-INDEX_SYMBOL = "INDEX-RUI"
+INDEX_SYMBOL = "INDEX-SP900"
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -344,8 +344,23 @@ def get_all_data(symbol: str,
 
     return {"symbol": sym, "data": out}
 
+# ---------- readiness probe -------------------------------------------------
+@app.get("/getready")
+def get_ready():
+    """
+    Returns HTTP-200 {“ready”: true} when the pre-computed cache has been
+    loaded into GLOBAL_CACHE, otherwise HTTP-503 {“ready”: false}.
+    """
+    # We consider the service “ready” when the index cache is non-empty
+    with CACHE_LOCK:
+        ready = bool(GLOBAL_CACHE["index"])
+    if ready:
+        return {"ready": True}
+    raise HTTPException(503, {"ready": False})
+
 # ---------- manual cache build ----------------------------------------------
 if __name__ == "__main__":
+    print("Running using "  + INDEX_SYMBOL + ' data')
     cache_file = os.path.join(
         CACHE_DIR, f"full_cache.{INDEX_SYMBOL}.{START_DATE}.{END_DATE}.zst"
     )
