@@ -344,8 +344,23 @@ def get_all_data(symbol: str,
 
     return {"symbol": sym, "data": out}
 
+# ---------- readiness probe -------------------------------------------------
+@app.get("/getready")
+def get_ready():
+    """
+    Returns HTTP-200 {“ready”: true} when the pre-computed cache has been
+    loaded into GLOBAL_CACHE, otherwise HTTP-503 {“ready”: false}.
+    """
+    # We consider the service “ready” when the index cache is non-empty
+    with CACHE_LOCK:
+        ready = bool(GLOBAL_CACHE["index"])
+    if ready:
+        return {"ready": True}
+    raise HTTPException(503, {"ready": False})
+
 # ---------- manual cache build ----------------------------------------------
 if __name__ == "__main__":
+    print("Running using "  + INDEX_SYMBOL + ' data')
     cache_file = os.path.join(
         CACHE_DIR, f"full_cache.{INDEX_SYMBOL}.{START_DATE}.{END_DATE}.zst"
     )
