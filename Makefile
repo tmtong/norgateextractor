@@ -5,7 +5,7 @@ requirements:
 	# virtualenv --python /usr/bin/python3.12 .venv312
 	chmod 700 sec
 	pip install --upgrade pip
-	pip install -r requirements.txt\
+	pip install -r bin/requirements.txt
 	mkdir -p rawindex logs
 	mkdir -p norgatedata/index norgatedata/stock
 	# create .venv
@@ -20,7 +20,7 @@ gitrcommit:
 	git config --global http.sslVerify false
 	git config --global credential.helper store
 	# git add -u
-	git add Makefile requirements.txt
+	git add Makefile bin
 	git add norgateextractor
 	-git commit -a -m "`date`"
 	git pull --no-rebase
