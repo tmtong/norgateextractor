@@ -1,3 +1,7 @@
+
+
+# this is run inside windows
+
 import logging
 import norgatedata
 import multiprocessing as mp
