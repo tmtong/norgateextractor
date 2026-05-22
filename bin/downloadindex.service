@@ -1,0 +1,15 @@
+[Unit]
+Description=Index Updater Service
+After=network.target
+
+[Service]
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WorkingDirectory=%h/Documents/norgateextractor/
+ExecStart=/usr/bin/bash -c 'cd %h/Documents/norgateextractor && source .venv/bin/activate && python3 norgateextractor/downloadindex.py'
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:%h/Documents/norgateextractor/logs/downloadindex.log
+StandardError=append:%h/Documents/norgateextractor/logs/downloadindex.log
+
+[Install]
+WantedBy=default.target
