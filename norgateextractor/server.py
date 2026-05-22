@@ -33,9 +33,10 @@ METRICS_DIR  = os.path.join(MOUNTPOINT, "stockmetrics")
 CACHE_DIR    = os.path.join(MOUNTPOINT, "cache")
 
 DATE_FORMAT  = "%Y-%m-%d"
-START_DATE   = "1998-01-01"
+START_DATE   = "1990-01-01"
 END_DATE     = "2025-01-01"
 INDEX_SYMBOL = "INDEX-SP900"
+# INDEX_SYMBOL = "INDEX-ETF"
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 
