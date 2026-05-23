@@ -138,32 +138,61 @@ def load_stock_to_cache(symbol: str) -> Dict[str, Dict[str, Any]]:
     return {row["date"]: row for row in rows}
 
 # ---------- pre-computation (savedata) --------------------------------------
-def savedata(index_symbol: str, start_date: str, end_date: str) -> None:
-    print(f"Pre-computing cache for {index_symbol}  {start_date} … {end_date}")
 
-    # --- load index ------------------------------------------------------------
-    index_file = os.path.join(INDEX_DIR, f"{index_symbol}.components")
-    if not os.path.exists(index_file):
-        raise FileNotFoundError(index_file)
-    df_idx = pd.read_csv(index_file)
-    df_idx["Date"] = pd.to_datetime(df_idx["Date"]).dt.strftime(DATE_FORMAT)
-    df_idx = df_idx[(df_idx["Date"] >= start_date) & (df_idx["Date"] <= end_date)]
+
+def savedata(index_symbol: str, start_date: str, end_date: str) -> None:
+    print(f"Pre-computing cache for {index_symbol} (using constituents from {index_symbol} and SPX), {start_date} … {end_date}")
+
+    # --- load primary index (given by index_symbol) --------------------------
+    index_file_input = os.path.join(INDEX_DIR, f"{index_symbol}.components")
+    if not os.path.exists(index_file_input):
+        raise FileNotFoundError(index_file_input)
+    df_idx_input = pd.read_csv(index_file_input)
+    df_idx_input["Date"] = pd.to_datetime(df_idx_input["Date"]).dt.strftime(DATE_FORMAT)
+    df_idx_input = df_idx_input[(df_idx_input["Date"] >= start_date) & (df_idx_input["Date"] <= end_date)]
+
+    # index_cache: only the primary index (original structure)
     index_cache: Dict[str, List[str]] = {}
-    for _, r in df_idx.iterrows():
+    for _, r in df_idx_input.iterrows():
         try:
             index_cache[r["Date"]] = [sanitize_symbol(c) for c in eval(r["Constituents"])]
         except Exception as e:
-            print(f"Bad index row: {e}")
+            print(f"Bad index row for {index_symbol}: {e}")
 
-    # --- discover symbols ------------------------------------------------------
-    all_symbols = {c for lst in index_cache.values() for c in lst}
-    print(f"Unique symbols: {len(all_symbols)}")
+    # --- load SPX index (if available) only for symbol discovery -------------
+    spx_constituents_by_date: Dict[str, List[str]] = {}
+    spx_file = os.path.join(INDEX_DIR, "INDEX-SPX.components")
+    if os.path.exists(spx_file):
+        df_spx = pd.read_csv(spx_file)
+        df_spx["Date"] = pd.to_datetime(df_spx["Date"]).dt.strftime(DATE_FORMAT)
+        df_spx = df_spx[(df_spx["Date"] >= start_date) & (df_spx["Date"] <= end_date)]
+        for _, r in df_spx.iterrows():
+            try:
+                spx_constituents_by_date[r["Date"]] = [sanitize_symbol(c) for c in eval(r["Constituents"])]
+            except Exception as e:
+                print(f"Bad SPX index row: {e}")
+    else:
+        print("Warning: INDEX-SPX.components not found, skipping SPX constituent expansion")
 
-    all_symbols.add(index_symbol) # ADD INDEX-SPY with "INDEX-"
-    all_symbols.add("INDEX-SP900")
+    # --- discover symbols from both indexes -----------------------------------
+    all_symbols = set()
+    # from primary index
+    for symbols in index_cache.values():
+        all_symbols.update(symbols)
+    # from SPX index
+    for symbols in spx_constituents_by_date.values():
+        all_symbols.update(symbols)
+
+    print(f"Unique symbols from {index_symbol} + SPX: {len(all_symbols)}")
+
+    # Add index symbols themselves (so we can fetch their price data)
+    all_symbols.add(index_symbol)
     all_symbols.add("INDEX-SPX")
+    # Also ensure INDEX-SP900 is included if needed (common benchmark)
+    if index_symbol != "INDEX-SP900":
+        all_symbols.add("INDEX-SP900")
 
-    # --- build stock cache -----------------------------------------------------
+    # --- build stock cache (same as before) -----------------------------------
     stock_cache: Dict[str, Dict[str, Dict[str, Any]]] = {}
     for symbol in tqdm(all_symbols, desc="Cleaning stocks"):
         feather_path = os.path.join(METRICS_DIR, f"{symbol}.feather")
@@ -175,19 +204,19 @@ def savedata(index_symbol: str, start_date: str, end_date: str) -> None:
         df = df.sort_values("date")
         rows: List[Dict[str, Any]] = df.to_dict(orient="records")
 
-        # 1. clean all columns
+        # clean all columns
         for row in rows:
             for k, v in list(row.items()):
                 row[k] = _clean_scalar(v)
 
-        # 2. add closest_adj_ord (uses 'adj close' column)
+        # add closest_adj_ord (uses 'adj close' column)
         _build_closest_adj_column(rows)
 
-        # 3. build date->row map
+        # build date->row map
         date_map = {row["date"]: row for row in rows}
         stock_cache[symbol] = date_map
 
-    # --- persist ---------------------------------------------------------------
+    # --- persist --------------------------------------------------------------
     cache_file = os.path.join(
         CACHE_DIR, f"full_cache.{index_symbol}.{start_date}.{end_date}.zst"
     )
@@ -195,6 +224,7 @@ def savedata(index_symbol: str, start_date: str, end_date: str) -> None:
     with open(cache_file, "wb") as f:
         compressor = zstd.ZstdCompressor(level=3)
         with compressor.stream_writer(f) as writer:
+            # index_cache remains a simple dict: date -> list of symbols (only primary index)
             pickle.dump({"stock": stock_cache, "index": index_cache}, writer)
     print("✅ Cache saved")
 
