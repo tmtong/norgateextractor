@@ -168,6 +168,7 @@ def savedata(index_symbol: str, start_date: str, end_date: str) -> None:
     for symbol in tqdm(all_symbols, desc="Cleaning stocks"):
         feather_path = os.path.join(METRICS_DIR, f"{symbol}.feather")
         if not os.path.exists(feather_path):
+            print(f"Warning: feather file not found for {symbol}, skipping")
             continue
         df = paft.read_feather(feather_path)
         df["date"] = pd.to_datetime(df["date"]).dt.strftime(DATE_FORMAT)
